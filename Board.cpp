@@ -14,9 +14,10 @@ void Board::setBoard() {
 
 	ALLEGRO_DISPLAY* display = al_create_display(BoardX * SpotSize, BoardY * SpotSize);
 	ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
-	ALLEGRO_TIMER* timer = al_create_timer(10.0/ 60);
+	ALLEGRO_TIMER* timer = al_create_timer(6.0/ 60);
 	ALLEGRO_TIMER* frameTimer = al_create_timer(1.0 / 60);
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap("node.png");
+	ALLEGRO_BITMAP* apple = al_load_bitmap("apple.png");
 	ALLEGRO_FONT* font = al_load_ttf_font("Roboto.ttf",48, 0);
 	assert(bitmap != NULL);
 	assert(font != NULL);
@@ -35,9 +36,13 @@ void Board::setBoard() {
 	
 
 	Snake* s = new Snake();
-
 	bool running = true;
 	float x = 0;
+
+	srand(time(0));
+
+	Apple* ap = new Apple();
+
 	while (running) {
 
 		ALLEGRO_EVENT event;
@@ -47,9 +52,11 @@ void Board::setBoard() {
 
 		if (event.type == ALLEGRO_EVENT_TIMER)
 			if (event.timer.source == timer) {
-				running = updateSnake(s);
+				running = updateSnake(s, ap);
 				al_clear_to_color(al_map_rgb(240, 240, 240));
 				drawSnake(s, bitmap);
+				//draw apple
+				al_draw_bitmap(apple, (ap->posX - 1) * SpotSize, (ap->posY - 1) * SpotSize, 0);
 				al_flip_display();
 			}
 
@@ -61,7 +68,6 @@ void Board::setBoard() {
 		
 	}
 		
-	
 
 	//afterGame
 	al_destroy_display(display);
@@ -79,7 +85,7 @@ void Board::drawSnake(Snake* s, ALLEGRO_BITMAP* bitmap) {
 	delete temp;
 }
 
-bool Board::updateSnake(Snake* s) {
+bool Board::updateSnake(Snake* s, Apple* ap) {
 	Node* temp1 = s->tail;
 	while (temp1 != s->head) {
 		temp1->el->posX = temp1->prev->el->posX;
@@ -106,6 +112,18 @@ bool Board::updateSnake(Snake* s) {
 			return false;
 		break;
 	}
+	if (s->head->el->posX==ap->posX && s->head->el->posY == ap->posY)
+
+	/*bool apPos = false;
+	while !(apPos) {
+		apPos = true;
+		Node* temp1 = s->tail;
+		while (temp1 != s->head) {
+			temp1->el->posX = temp1->prev->el->posX;
+			temp1->el->posY = temp1->prev->el->posY;
+			temp1 = temp1->prev;
+		}
+	}*/
 	return true;
 }
 

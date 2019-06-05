@@ -6,10 +6,12 @@ public:
 	int posX;
 	int posY;
 
+	Body() {};
 	Body(int x, int y) {
 		posX = x;
 		posY = y;
 	}
 };
+
 
 #endif
