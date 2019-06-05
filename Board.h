@@ -10,9 +10,10 @@
 
 class Board {
 public:
+	enum Direction { RIGHT, UP, LEFT, DOWN };
 	void setBoard();
 	void drawSnake(Snake* s, ALLEGRO_BITMAP* bitmap);
-	void updateSnake(Snake* s);
+	bool updateSnake(Snake* s);
 	void setDirection(Snake* s, ALLEGRO_KEYBOARD_STATE keyState);
 };
 

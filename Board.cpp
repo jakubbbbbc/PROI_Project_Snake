@@ -8,48 +8,59 @@ void Board::setBoard() {
 
 	al_init();
 	al_init_image_addon();
+	al_init_font_addon();
+	al_init_ttf_addon();
+	
 
 	ALLEGRO_DISPLAY* display = al_create_display(BoardX * SpotSize, BoardY * SpotSize);
 	ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
-	ALLEGRO_TIMER* timer = al_create_timer(30.0 / 60);
+	ALLEGRO_TIMER* timer = al_create_timer(10.0/ 60);
+	ALLEGRO_TIMER* frameTimer = al_create_timer(1.0 / 60);
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap("node.png");
+	ALLEGRO_FONT* font = al_load_ttf_font("Roboto.ttf",48, 0);
 	assert(bitmap != NULL);
+	assert(font != NULL);
+	ALLEGRO_TIMEOUT timeout;
+	al_init_timeout(&timeout, 1);
 
 	
 
 	al_install_keyboard();
-	al_register_event_source(queue, al_get_keyboard_event_source());
+	//al_register_event_source(queue, al_get_keyboard_event_source());
 	al_register_event_source(queue, al_get_display_event_source(display));
 	al_register_event_source(queue, al_get_timer_event_source(timer));
 	al_start_timer(timer);
-
+	al_register_event_source(queue, al_get_timer_event_source(frameTimer));
+	al_start_timer(frameTimer);
+	
 
 	Snake* s = new Snake();
 
 	bool running = true;
 	float x = 0;
 	while (running) {
-		al_clear_to_color(al_map_rgb(240, 240, 240));
-		//al_draw_text(font, al_map_rgb(255, 0, 0), x+=1, 0, 0, "Hello World");
-		drawSnake(s, bitmap);
-		updateSnake(s);
-		
-		ALLEGRO_KEYBOARD_STATE keyState;
-		al_get_keyboard_state(&keyState);
-		setDirection(s, keyState);
-		
 
 		ALLEGRO_EVENT event;
 		al_wait_for_event(queue, &event);
 		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			running = false;
 
-		
+		if (event.type == ALLEGRO_EVENT_TIMER)
+			if (event.timer.source == timer) {
+				running = updateSnake(s);
+				al_clear_to_color(al_map_rgb(240, 240, 240));
+				drawSnake(s, bitmap);
+				al_flip_display();
+			}
 
-		if (event.type == ALLEGRO_EVENT_TIMER) {
-			al_flip_display();
-		}
+		ALLEGRO_KEYBOARD_STATE keyState;
+		al_get_keyboard_state(&keyState);
+		setDirection(s, keyState);
+		
+		//al_draw_text(font, al_map_rgb(255, 0, 0), x, 0, 0, "Hello World");
+		
 	}
+		
 	
 
 	//afterGame
@@ -68,7 +79,7 @@ void Board::drawSnake(Snake* s, ALLEGRO_BITMAP* bitmap) {
 	delete temp;
 }
 
-void Board::updateSnake(Snake* s) {
+bool Board::updateSnake(Snake* s) {
 	Node* temp1 = s->tail;
 	while (temp1 != s->head) {
 		temp1->el->posX = temp1->prev->el->posX;
@@ -78,28 +89,42 @@ void Board::updateSnake(Snake* s) {
 	//delete temp1;
 	
 	switch (s->dir) {
-	case 1: s->head->el->posX += 1;
+	case RIGHT: s->head->el->posX += 1;
+		if (s->head->el->posX == BoardX + 1)
+			return false;
 		break;
-	case 2: s->head->el->posY -= 1;
+	case UP: s->head->el->posY -= 1;
+		if (s->head->el->posY == 0)
+			return false;
 		break;
-	case 3: s->head->el->posX -= 1;
+	case LEFT: s->head->el->posX -= 1;
+		if (s->head->el->posX == 0)
+			return false;
 		break;
-	case 4: s->head->el->posY += 1;
+	case DOWN: s->head->el->posY += 1;
+		if (s->head->el->posY == BoardY + 1)
+			return false;
 		break;
 	}
-
+	return true;
 }
 
-void setDirection(Snake* s, ALLEGRO_KEYBOARD_STATE keyState) {
+void Board::setDirection(Snake* s, ALLEGRO_KEYBOARD_STATE keyState) {
 	
 
-	if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && s->dir != 3)
-		s->dir = 1;
-	else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && s->dir != 1)
-		s->dir = 3;
-	else if (al_key_down(&keyState, ALLEGRO_KEY_UP) && s->dir != 4)
-		s->dir = 2;
-	else if (al_key_down(&keyState, ALLEGRO_KEY_DOWN) && s->dir != 2)
-		s->dir = 4;
+	if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT) && s->dir != LEFT)
+		s->dir = RIGHT;
+	else if (al_key_down(&keyState, ALLEGRO_KEY_LEFT) && s->dir != RIGHT)
+		s->dir = LEFT;
+	else if (al_key_down(&keyState, ALLEGRO_KEY_UP) && s->dir != DOWN)
+		s->dir = UP;
+	else if (al_key_down(&keyState, ALLEGRO_KEY_DOWN) && s->dir != UP)
+		s->dir = DOWN;
 }
 
+/*if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT))
+			if (al_key_down(&keyState, ALLEGRO_KEY_LCTRL))
+				x += 10;
+			else
+				x += 1;
+				*/
