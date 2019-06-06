@@ -35,68 +35,103 @@ void Board::game(){
 	al_register_event_source(queue, al_get_timer_event_source(frameTimer));
 	al_start_timer(frameTimer);
 	
-
-	Snake* s = new Snake();
-	bool running = true;
-	bool paused = false;
-	float x = 0;
-
-	srand(time(0));
-
-	Apple* ap = new Apple();
-
-	while (running) {
-
-		ALLEGRO_EVENT event;
-		al_wait_for_event(queue, &event);
-		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
-			running = false;
-
-		if (paused)
-			al_draw_text(font1, al_map_rgb(255, 0, 0), BoardX * SpotSize*0.3, BoardY * SpotSize*0.4, 0, "Paused");
-
-		if (event.type == ALLEGRO_EVENT_TIMER && !paused)
-			if (event.timer.source == timer) {
-				if (updateApple(s, &ap)) {
-					/*
-					score
-					*/
-					running = updateSnake(s, ap, true);
-				}
-				else
-					running = updateSnake(s, ap, false);
-
-
-				al_clear_to_color(al_map_rgb(240, 240, 240));
-
-				if (running)
-					drawSnake(s, bitmap);
-
-				//draw apple
-				al_draw_bitmap(apple, (ap->posX - 1) * SpotSize, (ap->posY - 1) * SpotSize, 0);
-
-				//draw frame
-				al_draw_line(0, 0, 0, BoardY * SpotSize, al_map_rgb(0, 0, 0), 5); //left
-				al_draw_line(0, 0, BoardX * SpotSize, 0, al_map_rgb(0, 0, 0), 5); //top
-				al_draw_line(0, BoardY * SpotSize, BoardX * SpotSize, BoardY * SpotSize, al_map_rgb(0, 0, 0), 3); //bottom
-				al_draw_line(BoardX * SpotSize, 0, BoardX * SpotSize, BoardY * SpotSize, al_map_rgb(0, 0, 0), 3); //right
-
-				//draw score
-				al_draw_textf(font, al_map_rgb(0, 0, 0), 0, BoardY * SpotSize, 0, "Your python size: %i", s->size);
-
+	Snake* s;
+	int score = 0;
+	int highScore = 0;
+	bool done = false;
+	
+	//game loop
+	while (!done) {
+		bool running = true;
+		//menu
+		bool menu = true;
+		while (menu) {
+			ALLEGRO_EVENT event1;
+			al_wait_for_event(queue, &event1);
+			if (event1.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+				running = false;
+				done = true;
+				menu = false;
 			}
-
-		al_flip_display();
-
-		ALLEGRO_KEYBOARD_STATE keyState;
-		al_get_keyboard_state(&keyState);
-		if (al_key_down(&keyState, ALLEGRO_KEY_P))
-			paused = true;
-		else if (al_key_down(&keyState, ALLEGRO_KEY_L))
-			paused = false;
-		if (!paused)
-			setDirection(s, keyState);
+			al_clear_to_color(al_map_rgb(240, 240, 240));
+			al_draw_textf(font, al_map_rgb(255, 150, 0), BoardX * SpotSize*0.3, BoardY * SpotSize*0.4, 0, "Your highscore: %i", highScore);
+			al_draw_text(font, al_map_rgb(255, 150, 0), BoardX * SpotSize*0.3, BoardY * SpotSize*0.4+20, 0, "Press M to play");
+			al_flip_display();
+			ALLEGRO_KEYBOARD_STATE keyState1;
+			al_get_keyboard_state(&keyState1);
+			if (al_key_down(&keyState1, ALLEGRO_KEY_M))
+				menu = false;
+		}
 		
+		s = new Snake();
+		//bool running = true;
+		bool paused = false;
+		//float x = 0;
+		srand(time(0));
+
+		Apple* ap = new Apple();
+
+		while (running) {
+
+			ALLEGRO_EVENT event;
+			al_wait_for_event(queue, &event);
+			if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+				running = false;
+				done = true;
+			}
+			if (paused)
+				al_draw_text(font1, al_map_rgb(255, 0, 0), BoardX * SpotSize*0.3, BoardY * SpotSize*0.4, 0, "Paused");
+
+			if (event.type == ALLEGRO_EVENT_TIMER && !paused)
+				if (event.timer.source == timer) {
+					if (updateApple(s, &ap)) {
+						/*
+						score
+						*/
+						running = updateSnake(s, ap, true);
+					}
+					else
+						running = updateSnake(s, ap, false);
+
+
+					al_clear_to_color(al_map_rgb(240, 240, 240));
+
+					//draw apple
+					al_draw_bitmap(apple, (ap->posX - 1) * SpotSize, (ap->posY - 1) * SpotSize, 0);
+					
+					//draw snake
+					if (running)
+						drawSnake(s, bitmap);
+
+					
+
+					//draw frame
+					al_draw_line(0, 0, 0, BoardY * SpotSize, al_map_rgb(0, 0, 0), 5); //left
+					al_draw_line(0, 0, BoardX * SpotSize, 0, al_map_rgb(0, 0, 0), 5); //top
+					al_draw_line(0, BoardY * SpotSize, BoardX * SpotSize, BoardY * SpotSize, al_map_rgb(0, 0, 0), 3); //bottom
+					al_draw_line(BoardX * SpotSize, 0, BoardX * SpotSize, BoardY * SpotSize, al_map_rgb(0, 0, 0), 3); //right
+
+					//draw score
+					score = s->size;
+					if (score > highScore)
+						highScore = score;
+					al_draw_textf(font, al_map_rgb(0, 0, 0), 0, BoardY * SpotSize, 0, "score: %i", score);
+					al_draw_textf(font, al_map_rgb(0, 0, 0), BoardX * SpotSize/2, BoardY * SpotSize, 0, "high score: %i", highScore);
+
+				}
+
+			al_flip_display();
+
+			ALLEGRO_KEYBOARD_STATE keyState;
+			al_get_keyboard_state(&keyState);
+			if (al_key_down(&keyState, ALLEGRO_KEY_P))
+				paused = true;
+			else if (al_key_down(&keyState, ALLEGRO_KEY_L))
+				paused = false;
+			if (!paused)
+				setDirection(s, keyState);
+
+		}
 	}
 		
 
