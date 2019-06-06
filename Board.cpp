@@ -4,21 +4,22 @@
 #define BoardY  15
 #define SpotSize  30
 
-void Board::setBoard() {
-
+void Board::game(){
 	al_init();
 	al_init_image_addon();
 	al_init_font_addon();
 	al_init_ttf_addon();
+	al_init_primitives_addon();
 	
 
-	ALLEGRO_DISPLAY* display = al_create_display(BoardX * SpotSize, BoardY * SpotSize);
+	ALLEGRO_DISPLAY* display = al_create_display(BoardX * SpotSize, BoardY * SpotSize+20);
 	ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
 	ALLEGRO_TIMER* timer = al_create_timer(6.0/ 60);
 	ALLEGRO_TIMER* frameTimer = al_create_timer(1.0 / 60);
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap("node.png");
 	ALLEGRO_BITMAP* apple = al_load_bitmap("apple.png");
-	ALLEGRO_FONT* font = al_load_ttf_font("Roboto.ttf",48, 0);
+	ALLEGRO_FONT* font = al_load_ttf_font("Roboto.ttf", 16, 0);
+	ALLEGRO_FONT* font1 = al_load_ttf_font("Roboto.ttf", 64, 0);
 	assert(bitmap != NULL);
 	assert(font != NULL);
 	ALLEGRO_TIMEOUT timeout;
@@ -37,6 +38,7 @@ void Board::setBoard() {
 
 	Snake* s = new Snake();
 	bool running = true;
+	bool paused = false;
 	float x = 0;
 
 	srand(time(0));
@@ -50,21 +52,50 @@ void Board::setBoard() {
 		if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			running = false;
 
-		if (event.type == ALLEGRO_EVENT_TIMER)
+		if (paused)
+			al_draw_text(font1, al_map_rgb(255, 0, 0), BoardX * SpotSize*0.3, BoardY * SpotSize*0.4, 0, "Paused");
+
+		if (event.type == ALLEGRO_EVENT_TIMER && !paused)
 			if (event.timer.source == timer) {
-				running = updateSnake(s, ap);
+				if (updateApple(s, &ap)) {
+					/*
+					score
+					*/
+					running = updateSnake(s, ap, true);
+				}
+				else
+					running = updateSnake(s, ap, false);
+
+
 				al_clear_to_color(al_map_rgb(240, 240, 240));
-				drawSnake(s, bitmap);
+
+				if (running)
+					drawSnake(s, bitmap);
+
 				//draw apple
 				al_draw_bitmap(apple, (ap->posX - 1) * SpotSize, (ap->posY - 1) * SpotSize, 0);
-				al_flip_display();
+
+				//draw frame
+				al_draw_line(0, 0, 0, BoardY * SpotSize, al_map_rgb(0, 0, 0), 5); //left
+				al_draw_line(0, 0, BoardX * SpotSize, 0, al_map_rgb(0, 0, 0), 5); //top
+				al_draw_line(0, BoardY * SpotSize, BoardX * SpotSize, BoardY * SpotSize, al_map_rgb(0, 0, 0), 3); //bottom
+				al_draw_line(BoardX * SpotSize, 0, BoardX * SpotSize, BoardY * SpotSize, al_map_rgb(0, 0, 0), 3); //right
+
+				//draw score
+				al_draw_textf(font, al_map_rgb(0, 0, 0), 0, BoardY * SpotSize, 0, "Your python size: %i", s->size);
+
 			}
+
+		al_flip_display();
 
 		ALLEGRO_KEYBOARD_STATE keyState;
 		al_get_keyboard_state(&keyState);
-		setDirection(s, keyState);
-		
-		//al_draw_text(font, al_map_rgb(255, 0, 0), x, 0, 0, "Hello World");
+		if (al_key_down(&keyState, ALLEGRO_KEY_P))
+			paused = true;
+		else if (al_key_down(&keyState, ALLEGRO_KEY_L))
+			paused = false;
+		if (!paused)
+			setDirection(s, keyState);
 		
 	}
 		
@@ -74,19 +105,27 @@ void Board::setBoard() {
 	al_uninstall_keyboard();
 	al_destroy_timer(timer);
 	al_destroy_bitmap(bitmap);
+	al_destroy_font(font);
 }
 
 void Board::drawSnake(Snake* s, ALLEGRO_BITMAP* bitmap) {
 	Node* temp = s->head;
 	while (temp != nullptr)  {
 		al_draw_bitmap(bitmap, (temp->el->posX-1)*SpotSize, (temp->el->posY-1) * SpotSize, 0);
+		/*
+		wyj¹tek temp->el=null
+		*/
+
 		temp = temp->next;
 	}
 	delete temp;
 }
 
-bool Board::updateSnake(Snake* s, Apple* ap) {
+bool Board::updateSnake(Snake* s, Apple* ap, bool hasEaten) {
 	Node* temp1 = s->tail;
+	if (hasEaten) {
+		s->addSegment(s->tail->el->posX, s->tail->el->posY);
+	}
 	while (temp1 != s->head) {
 		temp1->el->posX = temp1->prev->el->posX;
 		temp1->el->posY = temp1->prev->el->posY;
@@ -112,20 +151,15 @@ bool Board::updateSnake(Snake* s, Apple* ap) {
 			return false;
 		break;
 	}
-	if (s->head->el->posX==ap->posX && s->head->el->posY == ap->posY)
-
-	/*bool apPos = false;
-	while !(apPos) {
-		apPos = true;
-		Node* temp1 = s->tail;
-		while (temp1 != s->head) {
-			temp1->el->posX = temp1->prev->el->posX;
-			temp1->el->posY = temp1->prev->el->posY;
-			temp1 = temp1->prev;
-		}
-	}*/
+	temp1 = s->tail;
+	while (temp1 != s->head) {
+		if (temp1->el->posX == s->head->el->posX && temp1->el->posY == s->head->el->posY)
+			return false;
+		temp1 = temp1->prev;
+	}
+	//delete temp1;
 	return true;
-}
+	}
 
 void Board::setDirection(Snake* s, ALLEGRO_KEYBOARD_STATE keyState) {
 	
@@ -138,6 +172,39 @@ void Board::setDirection(Snake* s, ALLEGRO_KEYBOARD_STATE keyState) {
 		s->dir = UP;
 	else if (al_key_down(&keyState, ALLEGRO_KEY_DOWN) && s->dir != UP)
 		s->dir = DOWN;
+}
+
+bool Board::updateApple(Snake* s, Apple** ap) {
+	if (s->head->el->posX == (*ap)->posX && s->head->el->posY == (*ap)->posY) {
+		std::cout << "apple eaten\n";
+		int x, y;
+		bool apOk;
+		Node* temp = s->head;
+		do {
+			apOk = true;
+			x = rand() % 20 + 1;
+			y = rand() % 15 + 1;
+			//int i = 1;
+			temp = s->head;
+			while (temp != nullptr) {
+				//std::cout << i << std::endl;
+				//i++;
+				if (temp->el->posX == x && temp->el->posY == y) {
+					/*
+					wyj¹tek ¿e temp=null
+					*/
+					apOk = false;
+					//break;
+				}
+				temp = temp->next;
+			}
+			delete temp;
+		} while (!apOk);
+		//(*ap) = new Apple(s->tail->prev->el->posX, s->tail->prev->el->posY);
+		(*ap) = new Apple(x, y);
+		return true;
+	}
+	return false;
 }
 
 /*if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT))

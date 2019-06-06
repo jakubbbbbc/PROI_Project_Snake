@@ -13,6 +13,7 @@ public:
 	Node* tail;
 public:
 	Snake();
+	void addSegment(int x, int y);
 };
 
 #endif

@@ -8,6 +8,7 @@
 class Apple : public Body {
 public:
 	Apple();
+	Apple(int, int);
 };
 
 #endif

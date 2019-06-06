@@ -8,5 +8,5 @@ int main()
 {
 	//std::cout << "Hello World!\n";
 	Board b;
-	b.setBoard();
+	b.game();
 }
