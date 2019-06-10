@@ -9,5 +9,5 @@ Apple::Apple() {
 
 Apple::Apple(int x, int y) {
 	posX = x;
-	posY = y;
+	posY = y;A
 }

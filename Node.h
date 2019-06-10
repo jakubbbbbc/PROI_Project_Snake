@@ -13,6 +13,7 @@ public:
 	Node(int x, int y) {
 		el = new Body(x,y);
 		next = nullptr;
+		prev = nullptr;
 	}
 };
 

@@ -154,22 +154,15 @@ void Board::drawSnake(Snake* s, ALLEGRO_BITMAP* bitmap) {
 		throw exception;
 	}
 	Node* temp = s->head;
-	/*if (temp == nullptr) {
-		 std::string exception = "snake not existing, cannot draw snake!";
-		throw exception;
-	}*/
+
 	while (temp != nullptr)  {
 		al_draw_bitmap(bitmap, (temp->el->posX-1)*SpotSize, (temp->el->posY-1) * SpotSize, 0);
-		/*
-		wyj¹tek temp->el=null
-		*/
-
 		temp = temp->next;
 	}
 	delete temp;
 }
 
-bool Board::updateSnake(Snake* s, Apple* ap, bool hasEaten) {
+bool Board::updateSnake(Snake* s, bool hasEaten) {
 	Node* temp1 = s->tail;
 	if (hasEaten) {
 		s->addSegment(s->tail->el->posX, s->tail->el->posY);
@@ -258,10 +251,3 @@ bool Board::updateApple(Snake* s, Apple** ap) {
 	}
 	return false;
 }
-
-/*if (al_key_down(&keyState, ALLEGRO_KEY_RIGHT))
-			if (al_key_down(&keyState, ALLEGRO_KEY_LCTRL))
-				x += 10;
-			else
-				x += 1;
-				*/
