@@ -1,6 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include <string>
 #include "Snake.h"
 #include "Apple.h"
 
@@ -10,6 +11,7 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 #include <ctime>
+#include <string>
 
 class Board {
 public:

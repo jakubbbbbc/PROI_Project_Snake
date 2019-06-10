@@ -19,7 +19,7 @@ void Board::game(){
 	ALLEGRO_BITMAP* bitmap = al_load_bitmap("node.png");
 	ALLEGRO_BITMAP* apple = al_load_bitmap("apple.png");
 	ALLEGRO_FONT* font = al_load_ttf_font("Roboto.ttf", 16, 0);
-	ALLEGRO_FONT* font1 = al_load_ttf_font("Roboto.ttf", 64, 0);
+	ALLEGRO_FONT* font1 = al_load_ttf_font("Roboto.ttf", 48, 0);
 	assert(bitmap != NULL);
 	assert(font != NULL);
 	ALLEGRO_TIMEOUT timeout;
@@ -35,7 +35,7 @@ void Board::game(){
 	al_register_event_source(queue, al_get_timer_event_source(frameTimer));
 	al_start_timer(frameTimer);
 	
-	Snake* s;
+	Snake* s=nullptr;
 	int score = 0;
 	int highScore = 0;
 	bool done = false;
@@ -54,8 +54,8 @@ void Board::game(){
 				menu = false;
 			}
 			al_clear_to_color(al_map_rgb(240, 240, 240));
-			al_draw_textf(font, al_map_rgb(255, 150, 0), BoardX * SpotSize*0.3, BoardY * SpotSize*0.4, 0, "Your highscore: %i", highScore);
-			al_draw_text(font, al_map_rgb(255, 150, 0), BoardX * SpotSize*0.3, BoardY * SpotSize*0.4+20, 0, "Press M to play");
+			al_draw_textf(font1, al_map_rgb(0, 0, 0), BoardX * SpotSize*0.1+50, BoardY * SpotSize*0.3, 0, "Your highscore: %i", highScore);
+			al_draw_text(font1, al_map_rgb(0, 0, 0), BoardX * SpotSize*0.2+10, BoardY * SpotSize*0.6, 0, "Press M to play");
 			al_flip_display();
 			ALLEGRO_KEYBOARD_STATE keyState1;
 			al_get_keyboard_state(&keyState1);
@@ -64,9 +64,7 @@ void Board::game(){
 		}
 		
 		s = new Snake();
-		//bool running = true;
 		bool paused = false;
-		//float x = 0;
 		srand(time(0));
 
 		Apple* ap = new Apple();
@@ -84,15 +82,16 @@ void Board::game(){
 
 			if (event.type == ALLEGRO_EVENT_TIMER && !paused)
 				if (event.timer.source == timer) {
-					if (updateApple(s, &ap)) {
-						/*
-						score
-						*/
-						running = updateSnake(s, ap, true);
+					try {
+						if (updateApple(s, &ap))
+							running = updateSnake(s, ap, true);//gets bigger
+						else
+							running = updateSnake(s, ap, false);//size the same
 					}
-					else
-						running = updateSnake(s, ap, false);
-
+					catch (std::string w)
+					{
+						std::cout << "Wyjatek: " << w;
+					}
 
 					al_clear_to_color(al_map_rgb(240, 240, 240));
 
@@ -101,9 +100,15 @@ void Board::game(){
 					
 					//draw snake
 					if (running)
+					try
+					{
 						drawSnake(s, bitmap);
-
-					
+					}
+					catch (std::string w)
+					{
+						std::cout << "Wyjatek: " << w;
+					}
+						
 
 					//draw frame
 					al_draw_line(0, 0, 0, BoardY * SpotSize, al_map_rgb(0, 0, 0), 5); //left
@@ -144,7 +149,15 @@ void Board::game(){
 }
 
 void Board::drawSnake(Snake* s, ALLEGRO_BITMAP* bitmap) {
+	if (s == nullptr) {
+		std::string exception = "snake not existing, cannot draw snake!";
+		throw exception;
+	}
 	Node* temp = s->head;
+	/*if (temp == nullptr) {
+		 std::string exception = "snake not existing, cannot draw snake!";
+		throw exception;
+	}*/
 	while (temp != nullptr)  {
 		al_draw_bitmap(bitmap, (temp->el->posX-1)*SpotSize, (temp->el->posY-1) * SpotSize, 0);
 		/*
@@ -210,6 +223,10 @@ void Board::setDirection(Snake* s, ALLEGRO_KEYBOARD_STATE keyState) {
 }
 
 bool Board::updateApple(Snake* s, Apple** ap) {
+	if (s == nullptr) {
+		std::string exception = "snake not existing, cannot update Apple!";
+		throw exception;
+	}
 	if (s->head->el->posX == (*ap)->posX && s->head->el->posY == (*ap)->posY) {
 		std::cout << "apple eaten\n";
 		int x, y;
